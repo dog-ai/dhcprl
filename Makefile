@@ -1,6 +1,5 @@
 CFLAGS=	 -Wall -g
 LDFLAGS= -g
-LIBS=	-lpcap
 
 all: dhcprl
 

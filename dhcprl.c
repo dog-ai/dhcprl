@@ -16,8 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <pcap.h>
 #include <err.h>
+#include <time.h>    // time()
 
 #define SET_MAX(max, x)	if((x) > (max)) (max) = (x)
 
@@ -40,12 +40,11 @@ struct dhcp_request {
 
 LIST_HEAD(dhcp_request_list, dhcp_request) dhcp_requests;
 
-char errbuf[PCAP_ERRBUF_SIZE];
-
+void get_chaddr(char *chaddr, char *data, int data_len);
+void process_udp_broadcast_request(int sock_fd);
+int open_udp_broadcast_socket(int port);
 void process_socket_request(struct cli_request *cli_request);
 int open_unix_socket(const char * path);
-pcap_t *capture_packets(char *interface, char *filter);
-void pcap_callback(char *user, const struct pcap_pkthdr *h, const char *sp);
 void get_hostname(char *hostname, char *data, int data_len);
 void add_or_update_dhcp_request(time_t timestamp, char *mac_address, char *hostname);
 void remove_older_dhcp_requests(int ttl);
@@ -88,15 +87,11 @@ char *ether_ntoa_z(const struct ether_addr *addr) {
 int main(int argc, char **argv) {
 	char *interface = NULL;
 	char *sock_path = NULL;
-
-	pcap_t *cap;
-
-	int cap_fd, sock_srv_fd;
+	int sock_unix_fd, sock_udp_fd;
 	int max_fd = 0;
-
 	fd_set rset;
-
     int i;
+
 	for (i = 1; i < argc; i++) {
 		if (argv[i] == NULL || argv[i][0] != '-') break;
 		switch (argv[i][1]) {
@@ -119,13 +114,8 @@ int main(int argc, char **argv) {
 	    exit(0);
 	}
 
-	cap = capture_packets(interface, "broadcast and udp dst port bootps");
-	
-	sock_srv_fd = open_unix_socket(sock_path);
-
-	if ((cap_fd = pcap_get_selectable_fd(cap)) < 0) {
-	    errx(1, "pcap_get_selectable_fd(): %s", pcap_geterr(cap));
-	}
+	sock_unix_fd = open_unix_socket(sock_path);
+    sock_udp_fd = open_udp_broadcast_socket(67);
 
 	LIST_INIT(&cli_requests);
 	LIST_INIT(&dhcp_requests);
@@ -133,11 +123,11 @@ int main(int argc, char **argv) {
 	while (1) {
         FD_ZERO(&rset);
 
-    	FD_SET(cap_fd, &rset);
-    	SET_MAX(max_fd, cap_fd);
+    	FD_SET(sock_unix_fd, &rset);
+    	SET_MAX(max_fd, sock_unix_fd);
 
-    	FD_SET(sock_srv_fd, &rset);
-    	SET_MAX(max_fd, sock_srv_fd);
+        FD_SET(sock_udp_fd, &rset);
+        SET_MAX(max_fd, sock_udp_fd);
 
     	struct cli_request *cli_request;
 
@@ -152,11 +142,9 @@ int main(int argc, char **argv) {
 		    errx(1,"select() failed");
 		}
 
-		if (FD_ISSET(cap_fd, &rset)) {
-			if (pcap_dispatch(cap, 0, (pcap_handler) pcap_callback, NULL) < 0) {
-				errx(1,"pcap_loop(%s): %s", interface, pcap_geterr(cap));
-			}
-		}
+        if (FD_ISSET(sock_udp_fd, &rset)) {
+            process_udp_broadcast_request(sock_udp_fd);
+        }
 
 		remove_older_dhcp_requests(90);
 
@@ -173,11 +161,11 @@ int main(int argc, char **argv) {
     	}
 
 		// handle *new* unix socket requests
-		if(FD_ISSET(sock_srv_fd, &rset)) {
+		if(FD_ISSET(sock_unix_fd, &rset)) {
 		    struct cli_request *new_cli_request;
 			int sock_cli_fd;;
 
-			if((sock_cli_fd = accept(sock_srv_fd, NULL, NULL)) < 0) {
+			if((sock_cli_fd = accept(sock_unix_fd, NULL, NULL)) < 0) {
 				warnx("accept() failed");
 			} else {
 
@@ -188,7 +176,7 @@ int main(int argc, char **argv) {
             	}
 
 				if(!(new_cli_request = malloc(sizeof(struct cli_request)))) {
-					close(sock_srv_fd);
+					close(sock_unix_fd);
 					errx(1, ("malloc() failed"));
 				}
 
@@ -254,27 +242,27 @@ void process_socket_request(struct cli_request *cli_request) {
 
 int open_unix_socket(const char * path) {
 	struct sockaddr_un addr;
-	int sock_srv_fd;
+	int sock_unix_fd;
 
-	if((sock_srv_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+	if((sock_unix_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 	    errx(1,"socket() failed");
 	}
 
 	/* unlink the socket pseudo file before binding */
 	if(unlink(path) < 0 && errno != ENOENT) {
-		close(sock_srv_fd);
+		close(sock_unix_fd);
 		errx(1,"unlink() failed");
 	}
 
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 
-	if(bind(sock_srv_fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un)) < 0) {
-		close(sock_srv_fd);
+	if(bind(sock_unix_fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un)) < 0) {
+		close(sock_unix_fd);
 	}
 
-	if(listen(sock_srv_fd, 5) < 0) {
-		close(sock_srv_fd);
+	if(listen(sock_unix_fd, 5) < 0) {
+		close(sock_unix_fd);
 		errx(1,"listen() failed");
 	}
 
@@ -283,90 +271,81 @@ int open_unix_socket(const char * path) {
 		errx(1,"chmod() failed");
 	}
 
-	return sock_srv_fd;
+	return sock_unix_fd;
 }
 
-pcap_t *capture_packets(char *interface, char *filter) {
-	pcap_t *cap;
-	struct bpf_program fp;
+void process_udp_broadcast_request(int sock_fd) {
+    struct sockaddr_storage addr;
+    char buf[10000];
+    socklen_t fromlen = sizeof(addr);
+    int n;
 
-    if ((cap = pcap_open_live(interface, 1500, 1, 100, errbuf)) == NULL) {
-		errx(1, "pcap_open_live(): %s", errbuf);
-	}
+    if ((n = recvfrom(sock_fd, buf, sizeof(buf), 0, (struct sockaddr *) &addr, &fromlen)) < 0) {
+        errx(1, "recvfrom() failed");
+    }
 
-	if (pcap_setnonblock(cap, 1, errbuf) < 0) {
-	    errx(1, "pcap_setnonblock(): %s", pcap_geterr(cap));
-	}
+    time_t timestamp;           // timestamp on header
+    char mac_address[40];       // mac address of origin
+    char hostname[64];          // hostname
 
-	if (pcap_compile(cap, &fp, filter, 0, 0) < 0) {
-		errx(1,"pcap_compile: %s", pcap_geterr(cap));
-	}
+    timestamp = time(NULL);
 
-	if (pcap_setfilter(cap, &fp) < 0) {
-		errx(1,"pcap_setfilter: %s", pcap_geterr(cap));
-	}
+    get_chaddr(mac_address, buf, n);
 
-	return cap;
+    if (strlen(mac_address) == 0) {
+        return;
+    }
+
+    get_hostname(hostname, buf, n);
+
+    if (strlen(hostname) == 0) {
+        return;
+    }
+
+    add_or_update_dhcp_request(timestamp, mac_address, hostname);
 }
 
-void pcap_callback(char *user, const struct pcap_pkthdr *h, const char *sp) {
-	struct ether_header *eh;
-	struct ip *ip;
-	struct udphdr *udp;
-	int offset = 0;
-	time_t timestamp;			// timestamp on header
-	char mac_address[40];			// mac address of origin
-    char hostname[64];            // hostname
+int open_udp_broadcast_socket(int port) {
+    struct sockaddr_in addr;
+    int sock_fd;
 
-    memset(mac_address, '\0', sizeof(mac_address));
-    memset(hostname, '\0', sizeof(hostname));
+    if ((sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+        errx(1, "socket() failed");
+    }
 
-	if (h->caplen < ETHER_HDR_LEN) {
-		printf("Ignored too short ethernet packet: %d bytes\n",
-		    h->caplen);
-		return;
-	}
+    int broadcast = 1;
 
-	eh = (struct ether_header *)(sp + offset);
-	offset += ETHER_HDR_LEN;
+    if (setsockopt(sock_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast) < 0) {
+        errx(1, "setsockopt() failed");
+    }
 
-	// Check for IPv4 packets
-	if (eh->ether_type != 8) {
-		printf("Ignored non IPv4 packet: %d\n", eh->ether_type);
-		return;
-	}
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = INADDR_ANY;
 
-	// Check for length
-	if (h->caplen < offset + sizeof(struct ip)) {
-		printf("Ignored too short IPv4 packet: %d bytes\n", h->caplen);
-		return;
-	}
+    if (bind(sock_fd, (struct sockaddr *) &addr, sizeof(struct sockaddr)) < 0) {
+        errx(1, "bind() failed");
+    }
 
-	ip = (struct ip *)(sp + offset);
-	offset += sizeof(struct ip);
+    return sock_fd;
+}
 
-	udp = (struct udphdr *)(sp + offset);
-	offset += sizeof(struct udphdr);
+void get_chaddr(char *chaddr, char *data, int data_len) {
+    if (data_len<43) return;
 
-
-	timestamp = time(NULL);
-
-	strcpy(mac_address, ether_ntoa_z((struct ether_addr *)eh->ether_shost));
-
-	get_hostname(hostname, (char *)(sp + offset), ntohs(udp->uh_ulen));
-
-	if (strlen(hostname) == 0) {
-	    return;
-	}
-
-	add_or_update_dhcp_request(timestamp, mac_address, hostname);
+    sprintf(chaddr,
+        "%02x:%02x:%02x:%02x:%02x:%02x",
+        (unsigned char) data[28], (unsigned char) data[29], (unsigned char) data[30],
+        (unsigned char) data[31], (unsigned char) data[32], (unsigned char) data[33]);
 }
 
 void get_hostname(char *hostname, char *data, int data_len) {
 	int	j;
 
-	if (data_len == 0)
+	if (data_len == 0) {
 		return;
+    }
 
 	j = 236;
 	j += 4;	/* cookie */
@@ -428,7 +407,7 @@ void add_dhcp_request(time_t timestamp, char *mac_address, char *hostname) {
     request->timestamp = timestamp;
     strcpy(request->mac_address, mac_address);
     strcpy(request->hostname, hostname);
-    
+
     LIST_INSERT_HEAD(&dhcp_requests, request, requests);
 }
 
