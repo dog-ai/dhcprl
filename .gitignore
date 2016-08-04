@@ -31,4 +31,8 @@
 # Debug files
 *.dSYM/
 
+.idea
 *.iml
+
+dhcprl
+*.sock
