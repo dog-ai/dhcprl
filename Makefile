@@ -9,5 +9,5 @@ clean:
 dhcprl: dhcprl.o
 	${CC} ${LDFLAGS} -o $@ dhcprl.o ${LIBS}
 
-dhcprl.o: dhcprl.c Makefile
-	${CC} ${CFLAGS} -c -o $@ dhcprl.c
+dhcprl.o: src/dhcprl.c Makefile
+	${CC} ${CFLAGS} -c -o $@ src/dhcprl.c
