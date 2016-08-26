@@ -1,13 +1,14 @@
-CFLAGS=	 -Wall -g
-LDFLAGS= -g
+CFLAGS=	-Wall -g
+LDFLAGS=-g
 
-all: dhcprl
+all: build/dhcprl
 
 clean:
-	-rm dhcprl.o dhcprl
+	rm -r build
 
-dhcprl: dhcprl.o
-	${CC} ${LDFLAGS} -o $@ dhcprl.o ${LIBS}
+build/dhcprl: build/dhcprl.o
+	${CC} ${LDFLAGS} -o $@ build/dhcprl.o
 
-dhcprl.o: src/dhcprl.c Makefile
+build/dhcprl.o: src/dhcprl.c
+	mkdir -p build
 	${CC} ${CFLAGS} -c -o $@ src/dhcprl.c
