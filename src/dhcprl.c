@@ -16,15 +16,11 @@
 #include <fcntl.h>
 #include <net/ethernet.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <err.h>
-#include <time.h>    // time()
 
 #define SET_MAX(max, x) if((x) > (max)) (max) = (x)
 
@@ -51,7 +47,7 @@ void get_chaddr(char *chaddr, char *data, int data_len);
 void process_udp_broadcast_request(int sock_fd);
 int open_udp_broadcast_socket(int port);
 void process_socket_request(struct cli_request *cli_request);
-int open_unix_socket(const char * path);
+int open_unix_socket(const char *path);
 void get_hostname(char *hostname, char *data, int data_len);
 void add_or_update_dhcp_request(time_t timestamp, char *mac_address, char *hostname);
 void remove_older_dhcp_requests(int ttl);
@@ -102,17 +98,14 @@ int main(int argc, char **argv) {
   for (i = 1; i < argc; i++) {
     if (argv[i] == NULL || argv[i][0] != '-') break;
     switch (argv[i][1]) {
-    case 's':
-      sock_path = argv[++i];
-      break;
-    case 'i':
-      interface = argv[++i];
-      break;
-    default:
-      fprintf(stderr, "%s: %c: uknown option\n", argv[0], argv[i][1]);
-      print_usage();
+      case 's':sock_path = argv[++i];
+        break;
+      case 'i':interface = argv[++i];
+        break;
+      default:fprintf(stderr, "%s: %c: uknown option\n", argv[0], argv[i][1]);
+        print_usage();
 
-      exit(0);
+        exit(0);
     }
   }
 
@@ -247,7 +240,7 @@ void process_socket_request(struct cli_request *cli_request) {
   cli_request->sock_fd = -1;
 }
 
-int open_unix_socket(const char * path) {
+int open_unix_socket(const char *path) {
   struct sockaddr_un addr;
   int sock_unix_fd;
 
@@ -359,14 +352,14 @@ void get_hostname(char *hostname, char *data, int data_len) {
   while (j < data_len && (int) data[j] != 255) {
 
     switch (data[j]) {
-    case 12:  // Hostname
-      strncpy(hostname, &data[j + 2], data[j + 1]);
-      hostname[(int) data[j + 1]] = 0;
-      return;
+      case 12:  // Hostname
+        strncpy(hostname, &data[j + 2], data[j + 1]);
+        hostname[(int) data[j + 1]] = 0;
+        return;
 
-    default:
+      default:
 
-      break;
+        break;
     }
 
     if (data[j] == 0) // padding
