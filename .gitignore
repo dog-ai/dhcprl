@@ -36,3 +36,5 @@
 
 build
 *.sock
+
+cmake-build-debug
