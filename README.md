@@ -12,5 +12,5 @@ Note: Requires the ARM cross compiler toolchain installed and configured in your
 
 1. `mkdir build`
 2. `cd build`
-3. `cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/platforms/linux/toolchain/arm-linux-gnueabihf.cmake ..`
+3. `cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/platforms/rpi/toolchain/armv6-rpi1-linux-gnueabihf.cmake ..`
 4. `make`
