@@ -44,14 +44,23 @@ struct dhcp_request {
 LIST_HEAD(dhcp_request_list, dhcp_request) dhcp_requests;
 
 void get_chaddr(char *chaddr, char *data, int data_len);
+
 void process_udp_broadcast_request(int sock_fd);
+
 int open_udp_broadcast_socket(int port);
+
 void process_socket_request(struct cli_request *cli_request);
+
 int open_unix_socket(const char *path);
+
 void get_hostname(char *hostname, char *data, int data_len);
+
 void add_or_update_dhcp_request(time_t timestamp, char *mac_address, char *hostname);
+
 void remove_older_dhcp_requests(int ttl);
+
 void add_dhcp_request(time_t timestamp, char *mac_address, char *hostname);
+
 void remove_dhcp_request(char *mac_address, char *hostname);
 
 void print_dhcp_request(struct dhcp_request *request) {
@@ -208,7 +217,8 @@ int write_all(int s, char *buf, int len) {
 int write_dhcp_request(int sock_fd, struct dhcp_request *dhcp_request) {
   char buf[117]; // 10 + ';' + 40 + ';' + 64 + '\n'
 
-  sprintf(buf, "%lld;%s;%s\n", (long long) dhcp_request->timestamp, dhcp_request->mac_address, dhcp_request->hostname);
+  sprintf(buf, "%lld;%s;%s\n", (long long) dhcp_request->timestamp, dhcp_request->mac_address,
+          dhcp_request->hostname);
 
   return write_all(sock_fd, buf, (int) strlen(buf));
 }
@@ -284,9 +294,9 @@ void process_udp_broadcast_request(int sock_fd) {
     errx(1, "recvfrom() failed");
   }
 
-  time_t timestamp;           // timestamp on header
-  char mac_address[40];       // mac address of origin
-  char hostname[64];          // hostname
+  time_t timestamp;             // timestamp on header
+  char mac_address[40] = {0}; // mac address of origin
+  char hostname[64] = {0};    // hostname
 
   timestamp = time(NULL);
 
@@ -297,10 +307,6 @@ void process_udp_broadcast_request(int sock_fd) {
   }
 
   get_hostname(hostname, buf, n);
-
-  if (strlen(hostname) == 0) {
-    return;
-  }
 
   add_or_update_dhcp_request(timestamp, mac_address, hostname);
 }
@@ -350,7 +356,6 @@ void get_hostname(char *hostname, char *data, int data_len) {
   j = 236;
   j += 4; /* cookie */
   while (j < data_len && (int) data[j] != 255) {
-
     switch (data[j]) {
       case 12:  // Hostname
         strncpy(hostname, &data[j + 2], data[j + 1]);
@@ -374,6 +379,8 @@ void get_hostname(char *hostname, char *data, int data_len) {
 
 void add_or_update_dhcp_request(time_t timestamp, char *mac_address, char *hostname) {
   struct dhcp_request *request;
+
+  printf("%s\n", mac_address);
 
   LIST_FOREACH(request, &dhcp_requests, requests) {
     if (strcmp(request->mac_address, mac_address) == 0 && strcmp(request->hostname, hostname) == 0) {
@@ -405,8 +412,8 @@ void add_dhcp_request(time_t timestamp, char *mac_address, char *hostname) {
   }
 
   request->timestamp = timestamp;
-  strcpy(request->mac_address, mac_address);
-  strcpy(request->hostname, hostname);
+  strncpy(request->mac_address, mac_address, 40);
+  strncpy(request->hostname, hostname, 64);
 
   LIST_INSERT_HEAD(&dhcp_requests, request, requests);
 }
