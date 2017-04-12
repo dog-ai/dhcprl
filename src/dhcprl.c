@@ -380,8 +380,6 @@ void get_hostname(char *hostname, char *data, int data_len) {
 void add_or_update_dhcp_request(time_t timestamp, char *mac_address, char *hostname) {
   struct dhcp_request *request;
 
-  printf("%s\n", mac_address);
-
   LIST_FOREACH(request, &dhcp_requests, requests) {
     if (strcmp(request->mac_address, mac_address) == 0 && strcmp(request->hostname, hostname) == 0) {
       request->timestamp = timestamp;
