@@ -7,7 +7,7 @@ addons:
     sources:
       - george-edison55-precise-backports
     packages:
-      - gcc-4.9
+      - gcc
       - clang
       - cmake
       - cmake-data
