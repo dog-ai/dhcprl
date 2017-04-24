@@ -2,6 +2,7 @@
 
 # Build
 
+0. git submodule update --init
 1. `mkdir build`
 2. `cd build`
 3. `cmake ..`
