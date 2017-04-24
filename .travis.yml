@@ -1,13 +1,16 @@
-dist: trusty
 language: c
-compiler: gcc
+compiler:
+ - gcc
+ - clang
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
+      - george-edison55-precise-backports
     packages:
-      - gcc-6
+      - gcc-4.9
+      - clang
       - cmake
+      - cmake-data
 notifications:
   email: false
   slack:
