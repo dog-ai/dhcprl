@@ -18,3 +18,9 @@ set(SOURCE_FILES
         src/dhcprl.c)
 
 add_executable(dhcprl ${SOURCE_FILES})
+
+enable_testing()
+
+add_executable(test_dhcprl ${PROJECT_SOURCE_DIR}/test/test_dhcprl.c)
+
+add_test(test_dhcprl ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_dhcprl)
