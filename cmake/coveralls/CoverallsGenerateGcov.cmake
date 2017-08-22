@@ -438,7 +438,7 @@ endforeach()
 # as well, and generate JSON for those as well with 0% coverage.
 foreach(NOT_COVERED_SRC ${COVERAGE_SRCS_REMAINING})
 
-    if (IS_DIRECTORY NOT_COVERED_SRC)
+    if (IS_DIRECTORY ${NOT_COVERED_SRC})
         continue()
     endif ()
 
