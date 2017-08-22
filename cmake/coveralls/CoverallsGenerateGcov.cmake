@@ -438,7 +438,11 @@ endforeach()
 # as well, and generate JSON for those as well with 0% coverage.
 foreach(NOT_COVERED_SRC ${COVERAGE_SRCS_REMAINING})
 
-  # Set variables for json replacement
+    if (IS_DIRECTORY NOT_COVERED_SRC)
+        continue()
+    endif ()
+
+    # Set variables for json replacement
   set(GCOV_SRC_PATH ${NOT_COVERED_SRC})
   file(MD5 "${GCOV_SRC_PATH}" GCOV_CONTENTS_MD5)
   file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
