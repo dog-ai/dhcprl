@@ -1,17 +1,30 @@
 # 👀 Monitor DHCP requests on a LAN 💻
 
-# Build
+[![Build Status](https://travis-ci.org/dog-ai/dhcprl.svg?branch=master)](https://travis-ci.org/dog-ai/dhcprl)
+[![Coverage Status](https://coveralls.io/repos/github/dog-ai/dhcprl/badge.svg?branch=master)](https://coveralls.io/github/dog-ai/dhcprl?branch=master)
+[![Greenkeeper badge](https://badges.greenkeeper.io/dog-ai/dhcprl.svg)](https://greenkeeper.io/)
+[![](https://img.shields.io/github/release/dog-ai/dhcprl.svg)](https://github.com/dog-ai/dhcprl/releases)
+[![](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) 
 
-0. git submodule update --init
-1. `mkdir build`
-2. `cd build`
-3. `cmake ..`
-4. `make`
+Monitor DHCP requests on a LAN.
 
-# Build for Raspberry Pi (cross-compile)
-Note: Requires the ARM cross compiler toolchain installed and configured in your environment.
+### How to build
+Create build directory
+```
+mkdir build
+```
 
-1. `mkdir build`
-2. `cd build`
-3. `cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/platforms/rpi/toolchain/armv6-rpi1-linux-gnueabihf.cmake ..`
-4. `make`
+Change current directory
+```
+cd build
+```
+
+Generate Makefile
+```
+cmake ..
+```
+
+Compile source
+```
+make
+```
