@@ -1,6 +1,9 @@
-//
-// Created by Hugo Freire on 2017-08-23.
-//
+/*
+ * Copyright (c) 2017, Hugo Freire <hugo@dog.ai>.
+ *
+ * This source code is licensed under the license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
 
 #ifndef DHCPRL_DHCP_H
 #define DHCPRL_DHCP_H

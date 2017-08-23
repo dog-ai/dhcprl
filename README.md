@@ -10,7 +10,7 @@ Monitor DHCP requests on a LAN.
 ### How to use
 
 #### Use it in your terminal
-Run the daemon listening on interface `eth0` and socket `/var/run/dhcprl.sock`
+Run the daemon listening requests on interface `eth0` and make them available on socket `/var/run/dhcprl.sock`
 ```
 dhcprld -i eth0 -s /var/run/dhcprl.sock
 ```
@@ -31,7 +31,7 @@ Generate Makefile
 cmake ..
 ```
 
-Compile source
+Compile source code
 ```
 make
 ```
