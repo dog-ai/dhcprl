@@ -7,7 +7,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/time.h>
+#include <time.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <stdio.h>

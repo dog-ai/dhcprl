@@ -23,7 +23,7 @@
 #include "unix.h"
 
 void print_usage() {
-  printf("Usage: $0 <-i interface> <-s socket>\n");
+  printf("Usage: dhcprld <-i interface> <-s socket>\n");
 }
 
 int main(int argc, char **argv) {
