@@ -35,7 +35,7 @@ void get_hostname(char *hostname, char *data, int data_len) {
 
     j = 236;
     j += 4; /* cookie */
-    while (j < data_len && (int) data[j] != 255) {
+    while ((j < data_len) && ((unsigned char) data[j] != 255)) {
         switch (data[j]) {
             case 12:  // Hostname
                 strncpy(hostname, &data[j + 2], data[j + 1]);
