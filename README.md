@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/dog-ai/dhcprl.svg?branch=master)](https://travis-ci.org/dog-ai/dhcprl)
 [![Coverage Status](https://coveralls.io/repos/github/dog-ai/dhcprl/badge.svg?branch=master)](https://coveralls.io/github/dog-ai/dhcprl?branch=master)
-[![Greenkeeper badge](https://badges.greenkeeper.io/dog-ai/dhcprl.svg)](https://greenkeeper.io/)
 [![](https://img.shields.io/github/release/dog-ai/dhcprl.svg)](https://github.com/dog-ai/dhcprl/releases)
 [![](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) 
 
