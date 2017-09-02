@@ -26,9 +26,9 @@ Change current directory
 cd build
 ```
 
-Generate Makefile
+Generate Makefile with Raspberry Pi toolchain
 ```
-cmake ..
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/platforms/rpi/toolchain/armv6-rpi1-linux-gnueabihf.cmake ..
 ```
 
 Compile source code
