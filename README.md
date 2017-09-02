@@ -16,6 +16,16 @@ dhcprld -i eth0 -s /var/run/dhcprl.sock
 ```
 
 ### How to build
+Clone the GitHub repo
+```
+git clone https://github.com/dog-ai/dhcprl.git
+```
+
+Change current directory
+```
+cd dhcprl
+```
+
 Create build directory
 ```
 mkdir build
