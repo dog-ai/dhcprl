@@ -16,8 +16,8 @@ notifications:
   slack:
     rooms:
       secure: nOBxILV9q+vP0qfRqcE11MyhyknUIV6sNr8NyHxgO+o9inxCXZgxwZTxzGN4/A1daKvLj24ArJSUTBz0X0z9T0pChqISaMny+a6DLoxEoitAt7vpTCexaLwWXGhchJziX3G4OTH7KqGrypwfRPCYygflcf2pG8H3ADvV1LigVLCCLtHRfS2ApoAScc+KodR+xl4Xk+D/rvdfi8KuB4t+Nr6zLIO4EKFNCayESNz69a5y+bRRt4oGE94ePtHg0C6PP8FIMyqR3lq9KgMKW8e309NuM16s3M0pz5Aw7Tp+Q/f5EmA/C6JnfetCe0YiCOnhCVIU66xrsElqxlhrQLAIX67o/Sj7gTjgglzasTR8pXIqY99C1fc074BBWBkLfEPMEUBV5c/Z/dD0ZGz7ix4utFvm8mLQzjB2HFDlC67k50kGKZVT++5aXSdkKovjyhJggOGSjm90f0oExcQfeEfcCujRs56sMEq7tjZTcrBAcKLf5sve4HcoTJ64OKEM0EkMM1eUcSRyaBxEAWRocw4bubnEjltxuj/+cWOiVRwYGtVRGGU60ZJo914MllO/skSGXgrTbWKP9VQ7Qa9pHPdiKTIGOskYMlOTRS3I8mGZf9BwX/13/JGQ3R3V1Lj/YXWC+ni2GRgWWoXZQNgtRK76fM3zCpMA+DXA+JfLoQFy8Kw=
+    on_success: change
     on_pull_requests: false
-    on_failure: never
 install:
 - sudo apt-get update -qq
 - sudo apt-get install -y -qq lcov curl
